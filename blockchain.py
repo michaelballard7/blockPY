@@ -17,10 +17,10 @@ blockchain = [genesis_block]
 open_transactions = []
 
 # establish the ownership of the blockchain
-owner = 'Max'
+owner = 'Michael'
 
 # create an exisiting loop for all transaction participants in the blockchain
-participants = {'Max'}
+participants = {'Michael'}
 
 
 def hash_block(block):
@@ -211,7 +211,7 @@ while waiting_for_input:
             blockchain[0] = {
                 'previous_hash': '',
                 'index': 0,
-                'transactions': [{'sender': 'Chris', 'recipient': 'Max', 'amount': 100.0}]
+                'transactions': [{'sender': 'Chris', 'recipient': 'Michael', 'amount': 100.0}]
             }
     elif user_choice == 'q':
         # This will lead to the loop to exist because it's running condition becomes False
@@ -223,7 +223,7 @@ while waiting_for_input:
         print('Invalid blockchain!')
         # Break out of the loop
         break
-    print(get_balance('Max'))
+    print(get_balance('Michael'))
 else:
     print('User left!')
 
