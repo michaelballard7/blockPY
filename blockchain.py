@@ -1,6 +1,7 @@
 from functools import reduce
-import hashlib
-import json
+import hashlib as  hl
+from collections import OrderedDict
+from hash_util import *
 
 # Initializing our (empty) blockchain list
 # set the global mining reward
@@ -11,7 +12,8 @@ MINING_REWARD = 10
 genesis_block = {
     'previous_hash': '',
     'index': 0,
-    'transactions': []
+    'transactions': [],
+    'proof': 100
 }
 # initiate my blockchain and add the genisis block
 blockchain = [genesis_block]
@@ -25,12 +27,20 @@ owner = 'Michael'
 # create an exisiting loop for all transaction participants in the blockchain
 participants = {'Michael'}
 
+def valid_proof(transactions, last_hash, proof):
+    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    guess_hash = hash_string_256(guess)
+    print(guess_hash)
+    return guess_hash[0:2] == '00' #here Is where I can get fancy with my condition to check for a valid hash. Use academic research to guide me.
 
-def hash_block(block):
-    """ Create a function to hash information """
-    # return '-'.join([str(block[key]) for key in block])
-    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
+def proof_of_work():
+    last_block = blockchain[-1]
+    last_hash = hash_block(last_block)
+    proof = 0 
+    while not valid_proof(open_transactions, last_hash, proof):
+        proof += 1
+    return proof
 
 def get_balance(participant):
     """ Create a function to retrieve a users balance """
@@ -84,13 +94,14 @@ def add_transaction(recipient, sender=owner, amount=1.0):
         :recipient: The recipient of the funds.
         :amount: The amount of funds sent with the transaction (default = 1.0)
     """
-    # store the individual transction in a dictionary
-    transaction = {
-        'sender': sender,
-        'recipient': recipient,
-        'amount': amount
-    }
-    
+    # store the individual transction in a dictionary, update uses an orderedDict to prevent fault
+    # transaction = {
+    #     'sender': sender,
+    #     'recipient': recipient,
+    #     'amount': amount
+    # }
+    transaction = OrderedDict([('sender', sender),("recipient", recipient),('amount', amount)])
+  
     if verify_transaction(transaction):
         # add new transaction details to open transactions 
         open_transactions.append(transaction)
@@ -107,13 +118,18 @@ def mine_block():
     # grab the the last hashed block
     last_block = blockchain[-1]
     hashed_block = hash_block(last_block)  # pass in the last block to hash it and set to be passed to newly mined block
-    print(hash_block)
+    # print(hash_block)
+    
+    proof = proof_of_work()
+
     # design a new transaction to capture the mining reward per block
-    reward_transaction = {
-        'sender': 'MINING',
-        'recipient': owner,
-        'amount': MINING_REWARD
-    }
+    # reward_transaction = {
+    #     'sender': 'MINING',
+    #     'recipient': owner,
+    #     'amount': MINING_REWARD
+    # }
+
+    reward_transaction = OrderedDict([('sender', 'MINING'),('recipient', owner), ('amount', MINING_REWARD)])
 
     # create a shallow copy of the open transactions
     copied_transactions = open_transactions[:]
@@ -125,7 +141,8 @@ def mine_block():
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
-        'transactions': copied_transactions
+        'transactions': copied_transactions,
+        'proof': proof
     }
     #append new block to the blockchain
     blockchain.append(block)
@@ -146,12 +163,16 @@ def get_user_choice():
     return user_input
 
 
+
+
 def print_blockchain_elements():
     """ Output all blocks of the blockchain. """
     # Output the blockchain list to the console
     for block in blockchain:
         print('Outputting Block')
+        print( " ")
         print(block)
+        print(" ")
     else:
         print('-' * 20)
 
@@ -164,6 +185,11 @@ def verify_chain():
             continue # skip the validation of the genesis block
         if block['previous_hash'] != hash_block(blockchain[index - 1]):
             return False
+
+        if not valid_proof(block['transactions'][:-1], block['previous_hash'], block['proof']):
+            print("Proof of work is invalid")
+            return False
+
     return True # return true to continue process if all blocks are valid
 
 def verify_transactions():
@@ -190,7 +216,10 @@ waiting_for_input = True
 while waiting_for_input:
     """ Create an infite loop to run the blockchain cli """
     # print the user options
-    print('Please choose')
+    print(" ------------------------------------- ")
+    print(" ")
+    print('Please choose an option number?')
+    print(" ")
     print('1: Add a new transaction value')
     print('2: Mine a new block')
     print('3: Output the blockchain blocks')
@@ -198,6 +227,11 @@ while waiting_for_input:
     print('5: Check transaction validity')
     print('h: Manipulate the chain')
     print('q: Quit')
+    print(" ")
+    print(" ------------------------------------- ")
+    print(" ")
+
+
     # save user input
     user_choice = get_user_choice()
 
@@ -241,9 +275,14 @@ while waiting_for_input:
         print('Invalid blockchain!')
         # Break out of the loop
         break
-    print('Balance of {}\'s Account:{:6.2f}'.format('Michael', get_balance("Michael")))
+    print(" ------------------------------------------------ ")
+    print(" ")
+    print('Current Balance of {}\'s Account:{:6.2f}'.format(owner, get_balance("Michael")))
+    print(" ")
 else:
     print('User left!')
 
 
 print('Done!')
+
+"""  Pretty soon I will have built and understood a full block chain"""
