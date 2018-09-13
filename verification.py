@@ -41,7 +41,7 @@ class Verification:
 
     def verify_transaction(self, transaction, get_balance):
         """ Verify that an sender has suffiecient funds """
-        sender_balance = get_balance(transaction.sender)
+        sender_balance = get_balance()
         return sender_balance >= transaction.amount
 
 
