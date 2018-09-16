@@ -153,6 +153,6 @@ class Blockchain:
 
 
 
-
-
+    def display_block(self):
+        pass
 

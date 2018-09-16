@@ -97,4 +97,5 @@ class Node:
         print('Done!')
 
 initial_node = Node()
+
 initial_node.listen_for_input()
