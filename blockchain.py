@@ -12,8 +12,16 @@ from transaction import Transaction
 MINING_REWARD = 10
 
 class Blockchain:
+    """The Blockchain class manages the chain of blocks as well as open transactions and the node on which it's running.
+    
+    Attributes:
+        :chain: The list of blocks
+        :open_transactions (private): The list of open transactions
+        :hosting_node: The connected node (which runs the blockchain).
+    """
 
     def __init__(self, hosting_node_id):
+        """The constructor of the Blockchain class."""
         # the genisis block is the founding block of my blockchain
         genesis_block = Block(0, '', [], 100, 0) # creates the genesis block as an object
         # initializing an empty blockchain as private attribute
@@ -51,7 +59,7 @@ class Blockchain:
                 for tx in open_transactions:
                     updated_transaction = Transaction(tx['sender'], tx['recipient'], tx['amount'])
                     updated_transactions.append(updated_transaction)
-                self.open_transactions = updated_transactions
+                self.__open_transactions = updated_transactions
 
         except (IOError, IndexError):
             pass
@@ -60,12 +68,13 @@ class Blockchain:
 
 
     def save_data(self):
+        """Save blockchain + open transactions snapshot to a file """
         try:
             with open('blockchain.txt', mode='w') as f:
                 saveable_chain = [block.__dict__ for block in [ Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions] ,block_el.proof, block_el.timestamp ) for block_el in self.__chain]]
                 f.write(json.dumps(saveable_chain))
                 f.write('\n')
-                saveable_tx = [tx.__dict__ for tx in self.open_transactions]
+                saveable_tx = [tx.__dict__ for tx in self.__open_transactions]
                 f.write(json.dumps(saveable_tx))
         except IOError:
             print("Saving Failed")
@@ -77,7 +86,7 @@ class Blockchain:
         last_hash = hash_block(last_block)
         proof = 0 
         # Try different PoW numbers and return the first valid one
-        while not Verification.valid_proof(self.open_transactions, last_hash, proof):
+        while not Verification.valid_proof(self.__open_transactions, last_hash, proof):
             proof += 1
         return proof
 
@@ -92,7 +101,7 @@ class Blockchain:
         # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
         # This fetches sent amounts of open transactions (to avoid double spending)
         open_tx_sender = [tx.amount
-                          for tx in self.open_transactions if tx.sender == participant]
+                          for tx in self.__open_transactions if tx.sender == participant]
         tx_sender.append(open_tx_sender)
         print(tx_sender)
         """ Replaced by one liner below using lambda and reduce """
@@ -122,10 +131,12 @@ class Blockchain:
             :recipient: The recipient of the funds.
             :amount: The amount of funds sent with the transaction (default = 1.0)
         """
+        if self.hosting_node == None:
+            return False
         transaction = Transaction(sender, recipient, amount)
         if Verification.verify_transaction(transaction, self.get_balance):
             # add new transaction details to open transactions 
-            self.open_transactions.append(transaction)
+            self.__open_transactions.append(transaction)
             self.save_data()
             return True
         return False
@@ -133,6 +144,8 @@ class Blockchain:
 
     def mine_block(self):
         """Create a new block and add open transactions to it."""
+        if self.hosting_node == None:
+            return False
         # grab the the last hashed block
         last_block = self.__chain[-1]
         # hash the last block inorder to use it in the stored hash value
@@ -142,14 +155,14 @@ class Blockchain:
         # Copy transaction instead of manipulating the original open_transactions list
         # This ensures that if for some reason the mining should fail, we don't have the reward transaction stored in the open transactions
         # create a shallow copy of the open transactions
-        copied_transactions = self.open_transactions[:]
+        copied_transactions = self.__open_transactions[:]
         # append the mining reward transaction to all current open txns
         copied_transactions.append(reward_transaction)
         # create the new block object 
         block = Block(len(self.__chain), hashed_block, copied_transactions, proof)
         #append new block to the blockchain
         self.__chain.append(block)
-        self.open_transactions = []
+        self.__open_transactions = []
         self.save_data()
         return True
 
