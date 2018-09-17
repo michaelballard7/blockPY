@@ -1,9 +1,10 @@
-from hash_util import hash_block, hash_string_256
+from utilities.hash_util import hash_block, hash_string_256
 
 
 class Verification:
 
-    def valid_proof(self, transactions, last_hash, proof):
+    @staticmethod
+    def valid_proof(transactions, last_hash, proof):
         """Validate a proof of work number and see if it solves the puzzle algorithm (two leading 0s)
 
         Arguments:
@@ -23,7 +24,8 @@ class Verification:
         return guess_hash[0:2] == '00' #here Is where I can get fancy with my condition to check for a valid hash. Use academic research to guide me.
 
 
-    def verify_chain(self, blockchain):
+    @classmethod
+    def verify_chain(cls, blockchain):
         """ Verify the current blockchain and return True if it's valid, False otherwise."""
         # loop through each block and compare each available block
         for (index, block) in enumerate(blockchain): # Generate a destructured tuple with enumerate function
@@ -32,19 +34,21 @@ class Verification:
             if block.previous_hash != hash_block(blockchain[index - 1]):
                 return False
 
-            if not self.valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
+            if not cls.valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
                 print("Proof of work is invalid")
                 return False
 
         return True # return true to continue process if all blocks are valid
 
 
-    def verify_transaction(self, transaction, get_balance):
+    @staticmethod
+    def verify_transaction(transaction, get_balance):
         """ Verify that an sender has suffiecient funds """
         sender_balance = get_balance()
         return sender_balance >= transaction.amount
 
 
-    def verify_transactions(self, open_transactions,get_balance):
+    @classmethod
+    def verify_transactions(cls, open_transactions, get_balance):
         """ One line implementation to validate that all transactions are true """
-        return all([self.verify_transaction(tx, get_balance) for tx in open_transactions])
+        return all([cls.verify_transaction(tx, get_balance) for tx in open_transactions])
