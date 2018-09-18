@@ -13,8 +13,8 @@ class Node:
     def get_transaction_value(self):
         """ Returns the input of the user (a new transaction amount) as a float. """
         # Get the user input, transform it from a string to a float and store it in user_input
-        tx_recipient = input('Enter the recipient of the transaction: ')
-        tx_amount = float(input('Your transaction amount please: '))
+        tx_recipient = input('Enter Account Holder of the transaction: ')
+        tx_amount = float(input('Portfolio Allocation amount: '))
         return tx_recipient, tx_amount
 
 
@@ -29,11 +29,11 @@ class Node:
         # Output the blockchain list to the console
         for block in self.blockchain.get_chain():
             print('Outputting Block')
-            print( " ")
+            print(" ")
             print(block)
             print(" ")
         else:
-            print('-' * 20)
+            print("------------------------------------- ")
     
 
     def listen_for_input(self):
@@ -43,20 +43,20 @@ class Node:
         while waiting_for_input:
             """ Create an infite loop to run the blockchain cli """
             # print the user options
-            print(" ------------------------------------- ")
+            print("------------------------------------- ")
             print(" ")
-            print('Please choose an option number?')
+            print('Please choose an option?')
             print(" ")
-            print('1: Add a new transaction value')
-            print('2: Mine a new block')
-            print('3: Output the blockchain blocks')
-            print('4: Check transaction validity')
-            print('5: Create wallet')
-            print('6: Load wallet')
-            print('7: Save keys')
+            print('1: Allocate Portfolio Coin Value')
+            print('2: Mine new block')
+            print('3: Output the blockchain')
+            print('4: Check blockchain validity')
+            print('5: Create Client wallet')
+            print('6: Load Client wallet')
+            print('7: Save Client keys')
             print('q: Quit')
             print(" ")
-            print(" ------------------------------------- ")
+            print("------------------------------------- ")
             print(" ")
             # save user input
             user_choice = self.get_user_choice()
@@ -64,16 +64,20 @@ class Node:
             if user_choice == '1':
                 tx_data = self.get_transaction_value() 
                 recipient, amount = tx_data # I can destructure or unpack a tuple as such
+                # create a transaction signature
+                tx_signature = self.wallet.sign_transaction(self.wallet.public_key, recipient, amount)
                 # Add the transaction amount to the blockchain
-                if self.blockchain.add_transaction(recipient, self.wallet.public_key, amount=amount): # add transactiont to open transactions
+                if self.blockchain.add_transaction(recipient, self.wallet.public_key, tx_signature, amount=amount): # add transactiont to open transactions
                     print('Added transaction!')
                 else:
                     print('Transaction failed!')
-                print(self.blockchain.get_open_transactions())
+                print("Open Txn: ",self.blockchain.get_open_transactions())
             elif user_choice == '2':
                 try:
                     if not self.blockchain.mine_block():
+                        print(" ")
                         print("Mining Failed, You need a Wallet")
+                        print(" ")
                 except:
                     print("Mining failed please establish a wallet and public key")
                     continue
@@ -102,14 +106,16 @@ class Node:
                 print('Invalid blockchain!')
                 # Break out of the loop
                 break
-            print(" ------------------------------------------------ ")
+            print("-------------------------------------")
             print(" ")
-            print('Current Balance of {}\'s Account:{:6.2f}'.format(self.wallet.public_key, self.blockchain.get_balance()))
+            print("Node Details:")
+            print('Account Key: {}, Current Coin Value :{:6.2f}'.format(self.wallet.public_key, self.blockchain.get_balance()))
             print(" ")
         else:
-            print('User left!')
+            print('Session closed')
 
-        print('Done!')
+        print('Program secure, Logged Out!')
+        print(" ")
 
 if __name__ == '__main__':
     initial_node = Node()

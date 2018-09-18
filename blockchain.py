@@ -8,6 +8,7 @@ from utilities.verification import Verification
 # Import two functions from our hash_util.py file. Omit the ".py" in the import
 from block import Block
 from transaction import Transaction
+from wallet import Wallet
 # set the global mining reward
 MINING_REWARD = 10
 
@@ -49,7 +50,7 @@ class Blockchain:
                 # convert the loaded data because transactions should use an OrderedDict inorder not to manipulate data
                 updated_blockchain = []
                 for block in blockchain:
-                    converted_tx = [Transaction(tx['sender'], tx['recipient'], tx['amount']) for tx in block['transactions']]
+                    converted_tx = [Transaction(tx['sender'], tx['recipient'], tx['signature'], tx['amount']) for tx in block['transactions']]
                     updated_block = Block(block['index'], block['previous_hash'], converted_tx, block['proof'], block['timestamp']) # this now creates a block object
                     updated_blockchain.append(updated_block)
                 self.__chain = updated_blockchain
@@ -57,14 +58,18 @@ class Blockchain:
                 # convert the loaded data for the open transactions to also use the OrderedDict
                 updated_transactions = []
                 for tx in open_transactions:
-                    updated_transaction = Transaction(tx['sender'], tx['recipient'], tx['amount'])
+                    updated_transaction = Transaction(tx['sender'], tx['recipient'],tx['signature'], tx['amount'])
                     updated_transactions.append(updated_transaction)
                 self.__open_transactions = updated_transactions
 
         except (IOError, IndexError):
             pass
-        finally: 
-            print('Cleanup')
+        finally:
+            print(" ")
+            print(" ") 
+            print('Welcome to WealthCoin!')
+            print(" ")
+            print(" ")
 
 
     def save_data(self):
@@ -103,7 +108,7 @@ class Blockchain:
         open_tx_sender = [tx.amount
                           for tx in self.__open_transactions if tx.sender == participant]
         tx_sender.append(open_tx_sender)
-        print(tx_sender)
+        # print(tx_sender)
         """ Replaced by one liner below using lambda and reduce """
         amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
                              if len(tx_amt) > 0 else tx_sum + 0, tx_sender, 0)
@@ -124,7 +129,7 @@ class Blockchain:
         return self.__chain[-1]
 
 
-    def add_transaction(self, recipient, sender, amount=1.0):
+    def add_transaction(self, recipient, sender, signature, amount=1.0):
         """ Append a new value as well as the last blockchain value to the blockchain.
         Arguments:
             :sender: The sender of the funds.
@@ -133,7 +138,7 @@ class Blockchain:
         """
         if self.hosting_node == None:
             return False
-        transaction = Transaction(sender, recipient, amount)
+        transaction = Transaction(sender, recipient, signature, amount)
         if Verification.verify_transaction(transaction, self.get_balance):
             # add new transaction details to open transactions 
             self.__open_transactions.append(transaction)
@@ -151,11 +156,15 @@ class Blockchain:
         # hash the last block inorder to use it in the stored hash value
         hashed_block = hash_block(last_block)  # pass in the last block to hash it and set to be passed to newly mined block
         proof = self.proof_of_work()
-        reward_transaction = Transaction('Mining', self.hosting_node, MINING_REWARD)
+        reward_transaction = Transaction('Mining', self.hosting_node,'', MINING_REWARD)
         # Copy transaction instead of manipulating the original open_transactions list
         # This ensures that if for some reason the mining should fail, we don't have the reward transaction stored in the open transactions
         # create a shallow copy of the open transactions
         copied_transactions = self.__open_transactions[:]
+        # verify all transactions during mining
+        for tx in copied_transactions:
+            if not Wallet.verify_transaction(tx):
+                return False
         # append the mining reward transaction to all current open txns
         copied_transactions.append(reward_transaction)
         # create the new block object 
