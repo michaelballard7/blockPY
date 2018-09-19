@@ -26,7 +26,7 @@ class Blockchain:
         # the genisis block is the founding block of my blockchain
         genesis_block = Block(0, '', [], 100, 0) # creates the genesis block as an object
         # initializing an empty blockchain as private attribute
-        self.__chain = [genesis_block]
+        self.chain = [genesis_block]
         # unhandled transactions as a private attribute
         self.__open_transactions = []
         # excute load data at initializion
@@ -34,10 +34,15 @@ class Blockchain:
         # pass the hosting node to the block initiailization
         self.hosting_node = hosting_node_id
 
-   
-    def get_chain(self):
+    @property
+    def chain(self):
         return self.__chain[:]
 
+    @chain.setter
+    def chain(self,val):
+        self.__chain = val
+
+        
     def get_open_transactions(self):
         return self.__open_transactions[:]
 
