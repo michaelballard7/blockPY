@@ -16,6 +16,7 @@ class Wallet:
         self.private_key = private_key
         self.public_key = public_key
 
+
     def save_keys(self):
         if self.public_key != None and self.private_key != None:
             try:
@@ -24,8 +25,11 @@ class Wallet:
                     f.write('\n')
                     f.write(self.private_key)
                     f.close
+                return True
             except(IOError, IndexError):
                 print("Persisting wallet failed")
+                return False
+
 
     def load_keys(self):
         try: 
@@ -35,8 +39,11 @@ class Wallet:
                 private_key = keys[1]
                 self.public_key = public_key
                 self.private_key = private_key
+            return True
         except(IOError,IndexError):
-            print("Loading wallet failed") 
+            print("Loading wallet failed")
+            return False
+
 
 
     def generate_keys(self):

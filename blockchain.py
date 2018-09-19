@@ -102,6 +102,9 @@ class Blockchain:
 
 
     def get_balance(self):
+
+        if self.hosting_node == None:
+            return None
         """ Create a function to retrieve a users balance """
         participant = self.hosting_node
         # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
@@ -155,7 +158,7 @@ class Blockchain:
     def mine_block(self):
         """Create a new block and add open transactions to it."""
         if self.hosting_node == None:
-            return False
+            return None
         # grab the the last hashed block
         last_block = self.__chain[-1]
         # hash the last block inorder to use it in the stored hash value
@@ -169,7 +172,7 @@ class Blockchain:
         # verify all transactions during mining
         for tx in copied_transactions:
             if not Wallet.verify_transaction(tx):
-                return False
+                return None
         # append the mining reward transaction to all current open txns
         copied_transactions.append(reward_transaction)
         # create the new block object 
@@ -178,7 +181,7 @@ class Blockchain:
         self.__chain.append(block)
         self.__open_transactions = []
         self.save_data()
-        return True
+        return block
 
 
 
